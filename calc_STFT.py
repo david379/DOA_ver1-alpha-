@@ -6,7 +6,7 @@ def calc_STFT(x, fs, win, N_STFT, R_STFT, sides):
     N_STFT_half = N_STFT/2 + 1;
 
     #get frequency vector
-    f = np.linspace(0,(fs/2)/4,int(N_STFT_half));
+    f = np.linspace(0,(fs/2),int(N_STFT_half));
     if (sides=='twosided'):
         f = [f, np.take(-f,(range(len(f)-2,0,-1)))];
 
