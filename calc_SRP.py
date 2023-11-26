@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 
-def calc_SRP(Psi_STFT, omega, T, N_mm, N_aux, Delta_t_i):
+def calc_SRP(Psi_STFT, omega, T, N_mm, N_aux, Delta_t_i, i, xi_mm_samp):
 
     J = np.size(Delta_t_i,0);
     P = np.size(Delta_t_i,1);
@@ -14,7 +14,9 @@ def calc_SRP(Psi_STFT, omega, T, N_mm, N_aux, Delta_t_i):
 
     nT = [];
     #xi_mm_samp = [];
-    xi_mm_samp = np.zeros((L,P),dtype=object);
+    
+    if i == 0:
+        xi_mm_samp = np.zeros((L,P),dtype=object);
 
     for l in range (1,L+1):
         SRP = np.zeros([J, len(N_aux)]);
@@ -31,7 +33,9 @@ def calc_SRP(Psi_STFT, omega, T, N_mm, N_aux, Delta_t_i):
             nT.append( np.transpose(n * T));
             aa = nT[p - 1];
             aa = aa.reshape(-1, 1);
-            xi_mm_samp[l - 1,p - 1] = np.real(np.dot(np.exp(np.dot((1j * aa), omega.reshape(1, -1))), psi));
+            
+            if i == 0:
+                xi_mm_samp[l - 1,p - 1] = np.real(np.dot(np.exp(np.dot((1j * aa), omega.reshape(1, -1))), psi));
 
             for N_aux_ind in range(1, len(N_aux) + 1):
 
@@ -50,6 +54,6 @@ def calc_SRP(Psi_STFT, omega, T, N_mm, N_aux, Delta_t_i):
 
         SRP_stack[l-1,:,:] = SRP;
 
-    return SRP_stack;
+    return (SRP_stack, xi_mm_samp);
 
 

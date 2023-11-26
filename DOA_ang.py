@@ -10,30 +10,39 @@ Created on Wed Nov 22 16:20:23 2023
 
 @author: david
 """
+import numpy as np
+import time
+import scipy.io
+import numba
+import math
+from calc_sampleParam import calc_sampleParam
+from calc_FD_GCC import calc_FD_GCC
+from calc_SRP import calc_SRP
+from calc_STFT import calc_STFT
+import soundfile as sf
+from numba import jit
+#@jit()
 def DOA_ang():
-    import time
     ### ACOUSTIC SETUP
 #    from numpy import linalg as LA
     
-    import numpy as np
     
 #    from numpy import  matlib as mb
 #    import scipy.io as spio
     
     #speed of sound
-    c = 340;
+    c = 343;
     #sample rate
     fs = 32000;
     #bandlimit
-    import math
     pi=math.pi
-    w_0 = pi*fs;
+    w_0 = pi*fs/4;
     #SNR in dB
     
     
     ## MICROPHONE ARRAY
     # circular array, 10cm radius, six microphones
-    import scipy.io
+    
     #import matplotlib.pyplot as plt
     tmp = scipy.io.loadmat('mic_arrays/platform_mic_array.mat')
     # array center
@@ -41,7 +50,8 @@ def DOA_ang():
     # microphone positions
     micPos = tmp.get('micPos');
     # number of microphones
-    #M = len(micPos)
+    M = len(micPos)
+    P = M*(M - 1)/2
     
     tmp = scipy.io.loadmat('DOAs/DOA.mat');
     DOAvec_list = tmp.get('DOA_list');
@@ -54,7 +64,7 @@ def DOA_ang():
     
 #    from DOA import DOA
 #    true_DOAvec, DOAang=DOA(true_loc,arrayCenterPos)
-#    L = 1;
+    L = 1;
     
     
     # STFT PARAMETERS
@@ -73,7 +83,7 @@ def DOA_ang():
     
     # SRP APPROXIMATION PARAMETERS
     # compute sampling period and number of samples within TDOA interval
-    from calc_sampleParam import calc_sampleParam
+    
     T, N_mm  =calc_sampleParam(micPos, w_0, c);
     #number of auxilary samples (approximation will be computed for all values in vector)
     N_aux = np.array([2]);
@@ -88,7 +98,7 @@ def DOA_ang():
     
     Tictoc = np.zeros((1, 1));
     
-    import soundfile as sf
+
     
     
     
@@ -104,7 +114,7 @@ def DOA_ang():
     
     
     # transform to STFT domain
-    from calc_STFT import calc_STFT
+    
     t = time.time();
     x_STFT,f_x = calc_STFT(x_TD, fs, win, N_STFT, R_STFT, 'onesided');
     
@@ -118,26 +128,28 @@ def DOA_ang():
     
         ## PROCESSING
     #from calc_SRPapprFast import calc_SRPapprFast
-    from calc_FD_GCC import calc_FD_GCC
+    
     psi_STFT = calc_FD_GCC(y_STFT); #sorun yok
     maxIdx_conv = 0;
     maxIdx_conv_prev = maxIdx_conv;
     size_prev = 0;
+    
+    xi_mm_samp = np.zeros((L,28),dtype=object);
+    
     for i in range(0,np.size(Delta_t_list, 1)):
         Delta_t = Delta_t_list[0,i];
         DOAvec = DOAvec_list[0, i];
         index = (maxIdx_conv_prev ) * size_prev + maxIdx_conv;
         if i: 
-            Delta_t_i = Delta_t[:, :, index];
-            DOAvec_i = DOAvec[:, :, index];
-        else: 
-            Delta_t_i = Delta_t;
-            DOAvec_i = DOAvec;
+            Delta_t = np.reshape(Delta_t[:, :, index],(np.size(Delta_t,0),np.size(Delta_t,1)))#Delta_t[:, :, index];
+            DOAvec = np.reshape(DOAvec[:, :, index],(np.size(DOAvec,0),np.size(DOAvec,1)))#DOAvec[:, :, index];
+        Delta_t_i = Delta_t;
+        DOAvec_i = DOAvec;
         size_prev = np.size(DOAvec, 0);
             # SRP approximation based on shannon nyquist sampes
             #print('* compute SRP approximation...')
-        from calc_SRP import calc_SRP
-        SRP_appr = calc_SRP(psi_STFT, omega, T, N_mm, N_aux, Delta_t_i);
+        
+        (SRP_appr, xi_mm_samp) = calc_SRP(psi_STFT, omega, T, N_mm, N_aux, Delta_t_i, i, xi_mm_samp);
         
             ####
         
@@ -156,6 +168,6 @@ def DOA_ang():
     
     print('mean time per target: '+ str(np.mean(Tictoc)))
     print('DONE.')
-    return(np.arctan2(estim_DOAvec[0, 1],estim_DOAvec[0, 0])*180/np.pi)
+    return(np.arctan2(estim_DOAvec[0, 1],estim_DOAvec[0, 0])*180.0/np.pi)
 
 
