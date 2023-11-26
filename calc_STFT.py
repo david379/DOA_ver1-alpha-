@@ -1,11 +1,12 @@
 import numpy as np
 import math
+import pyfftw
 from scipy.fft import fft, ifft
 def calc_STFT(x, fs, win, N_STFT, R_STFT, sides):
     N_STFT_half = N_STFT/2 + 1;
 
     #get frequency vector
-    f = np.linspace(0,fs/2,int(N_STFT_half));
+    f = np.linspace(0,(fs/2)/4,int(N_STFT_half));
     if (sides=='twosided'):
         f = [f, np.take(-f,(range(len(f)-2,0,-1)))];
 
@@ -22,7 +23,7 @@ def calc_STFT(x, fs, win, N_STFT, R_STFT, sides):
     for m in range (1,M+1):
         for l in range (1,L+1): # Frame index
             x_frame = x[(l-1)*int(R_STFT)+1-1:(l-1)*int(R_STFT)+int(N_STFT), m-1];
-            X_frame = fft(np.multiply(win,x_frame));
+            X_frame = pyfftw.interfaces.scipy_fftpack.fft(np.multiply(win,x_frame), threads = 5);
             if (sides == 'onesided'):
                 X[:,l-1,m-1] = X_frame[0:int(N_STFT_half)];
             if (sides == 'twosided'):

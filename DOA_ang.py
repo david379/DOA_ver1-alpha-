@@ -77,7 +77,7 @@ def DOA_ang():
     win = np.sqrt(np.hanning(N_STFT));
     N_STFT_half = math.floor(N_STFT/2)+1;
     # frequency vector
-    omega = 2*pi*np.transpose(np.linspace(0,fs/2,N_STFT_half));
+    omega = 2*pi*np.transpose(np.linspace(0,(fs/2)/4,N_STFT_half));
     
     
     
