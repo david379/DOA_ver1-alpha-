@@ -24,7 +24,7 @@ def calc_FD_GCC(y_STFT):
                     psi[p-1] = y[m-1] * np.conjugate(y[mprime-1]);
 
 
-            psi = psi / (abs(psi) + 1e-9);
+            #psi = psi / (abs(psi) + 1e-9);
             Psi_STFT[k-1, l-1,:] = np.transpose(psi); #psi 15 1 Psi_STFT 1025 32 15
 
     return Psi_STFT
