@@ -8,15 +8,22 @@ Created on Sun Nov 26 10:38:56 2023
 import numpy as np
 import soundfile as sf
 import DOA_ang as da
+import scipy.io
 def process(w = 5, d = 0.5, m = 1):
+    
     x_TD,samplerate = sf.read('audio/signalOG.wav');
+    tmp1 = scipy.io.loadmat('mic_arrays/platform_mic_array.mat')
+    tmp2 = scipy.io.loadmat('DOAs/DOA.mat');
     sp = np.arange(1600, np.size(x_TD,0), 1600)
     x = np.split(x_TD, sp, 0)
     l = []
+    
     for i in x[:-1]:
-        sf.write('audio/signal-1.wav', i, 32000)
-        l.append(da.DOA_ang())
-    t = np.arange(0, 0.05*len(x)-0.05,0.05)
+        #sf.write('audio/signal-1.wav', i, 32000)
+        l.append(da.DOA_ang(i, tmp1.get('micPos'), tmp2.get('DOA_list'),tmp2.get('Delta_list')))
+    t = np.arange(0, 0.05*len(x) - 0.05, 0.05)
+    
+    
     def remove_isolated_spikes(datan, window_size=3, min_isolation_distance=1, deviation_factor=2.0):
         """
         Remove isolated spikes from numpy array by comparing each point to its neighbors.
